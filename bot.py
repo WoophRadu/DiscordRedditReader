@@ -39,6 +39,7 @@ try:
     redditSecret = config["RedditLogin"]["client_secret"]
     botCommandPrefix = config["Options"]["command_prefix"]
     fetchInterval = int(config["AutoFetch"]["fetch_interval"])
+    skipSticky = config["AutoFetch"]["skip_sticky"]
     channelToSubreddit = dict()
     channelPostAmount = dict()
     for section in config.sections():
@@ -85,25 +86,30 @@ async def on_ready():
             for subredditName in channelToSubreddit[str(channel.id)]:
                 postCounter = 0
                 for post in reddit.subreddit(subredditName).hot(limit=channelPostAmount[str(channel.id)]):
-                    postCounter += 1
-                    embed = discord.Embed()
-                    embed.title = post.title
-                    embed.url = "https://www.reddit.com" + post.permalink
-                    embed.description = post.selftext
-                    if not post.is_self:
-                        if post.url.lower().endswith((".jpeg", ".jpg", ".png", ".gif")):
-                            embed.set_thumbnail(url=post.url)
-                            postTypeStr = "link (image)"
-                        else:
-                            embed.add_field(name="Link from post:", value=post.url, inline=True)
-                            postTypeStr = "link"
+                    if post.stickied and (skipSticky in ["true", "True", "1", "yes", "Yes", "y", "Y", "enabled"]):
+                        logger.log("Skipped a sticky post. This still counts towards the limit (post_amount). If you're not seeing enough posts, increase your post_amount.")
                     else:
-                        postTypeStr = "self-post (text)"
-                    embed.colour = discord.Colour(0).from_rgb(255, 86, 0)
-                    embed.set_author(name="/r/" + subredditName, url="https://www.reddit.com/r/" + subredditName, icon_url="https://www.reddit.com/favicon.ico")
-                    embed.set_footer(text="/u/" + post.author.name + ", " + postTypeStr, icon_url=post.author.icon_img)
-                    await channel.send(embed=embed)
-                    time.sleep(0.51)  # Discord rate-limits to 2 actions / second
+                        postCounter += 1
+                        embed = discord.Embed()
+                        embed.title = post.title
+                        embed.url = "https://www.reddit.com" + post.permalink
+                        embed.description = post.selftext
+                        if not post.is_self:
+                            if post.url.lower().endswith((".jpeg", ".jpg", ".png", ".gif")):
+                                embed.set_thumbnail(url=post.url)
+                                postTypeStr = "link (image)"
+                            else:
+                                embed.add_field(name="Link from post:", value=post.url, inline=True)
+                                postTypeStr = "link"
+                        else:
+                            postTypeStr = "self-post (text)"
+                        embed.colour = discord.Colour(0).from_rgb(255, 86, 0)
+                        embed.set_author(name="/r/" + subredditName, url="https://www.reddit.com/r/" + subredditName,
+                                         icon_url="https://www.reddit.com/favicon.ico")
+                        embed.set_footer(text="/u/" + post.author.name + ", " + postTypeStr,
+                                         icon_url=post.author.icon_img)
+                        await channel.send(embed=embed)
+                        time.sleep(0.51)  # Discord rate-limits to 2 actions / second
                 logger.log("Found " + str(postCounter) + " posts in /r/" + subredditName + " \t->\tposted to channel #" + channel.name)
         logger.log("Done fetching posts for now! Check back in " + str(fetchInterval) + " seconds!")
         time.sleep(fetchInterval)
