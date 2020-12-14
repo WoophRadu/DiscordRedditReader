@@ -42,11 +42,13 @@ try:
     skipSticky = config["AutoFetch"]["skip_sticky"]
     channelToSubreddit = dict()
     channelPostAmount = dict()
+    channelPostCateg = dict()
     for section in config.sections():
         if section[:7] == "Channel":
             channelID = config[section]["channel_id"]
             channelToSubreddit[channelID] = config[section]["subreddits"].split()
             channelPostAmount[channelID] = int(config[section]["post_amount"])
+            channelPostCateg[channelID] = config[section]["post_category"]
 except:
     logger.log("Something wrong with the config. If you crash, delete it so we can regenerate it.", "error")
 
@@ -67,6 +69,21 @@ bot = commands.Bot(command_prefix=botCommandPrefix, description=description)
 
 bindedChannels = list()
 
+
+def fetchPosts(subredditName: str, limit: int, categ: str, onlyNew: bool):
+    if categ == "hot":
+        return reddit.subreddit(subredditName).hot(limit=limit)
+    elif categ == "top":
+        return reddit.subreddit(subredditName).top(limit=limit)
+    elif categ == "new":
+        return reddit.subreddit(subredditName).new(limit=limit)
+    elif categ == "controversial":
+        return reddit.subreddit(subredditName).controversial(limit=limit)
+    elif categ == "rising":
+        return reddit.subreddit(subredditName).rising(limit=limit)
+
+
+
 @bot.event
 async def on_ready():
     logger.log("on_ready fired. You are in debug mode.", "debug")
@@ -85,7 +102,7 @@ async def on_ready():
         for channel in bindedChannels:
             for subredditName in channelToSubreddit[str(channel.id)]:
                 postCounter = 0
-                for post in reddit.subreddit(subredditName).hot(limit=channelPostAmount[str(channel.id)]):
+                for post in fetchPosts(subredditName, channelPostAmount[str(channel.id)], channelPostCateg[str(channel.id)], True):
                     if post.stickied and (skipSticky in ["true", "True", "1", "yes", "Yes", "y", "Y", "enabled"]):
                         logger.log("Skipped a sticky post. This still counts towards the limit (post_amount). If you're not seeing enough posts, increase your post_amount.")
                     else:
