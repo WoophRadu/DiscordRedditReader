@@ -56,7 +56,7 @@ logging.Logger.setLevel(logging.getLogger(), loglevel)
 logger.setlevel(loglevel)
 
 if not (redditUser == "YourUsername" or redditPassword == "YourPassword" or redditID == "YourID" or redditSecret == "YourSecret"):
-    reddit = praw.Reddit(client_id=redditID, client_secret=redditSecret, password=redditPassword, username=redditUser, user_agent='DiscordRedditSubmitter (coded by u/WoophRadu, src at github.com/WoophRadu/DiscordRedditSubmitter)')
+    reddit = praw.Reddit(client_id=redditID, client_secret=redditSecret, password=redditPassword, username=redditUser, user_agent='DiscordRedditReader (coded by u/WoophRadu, src at github.com/WoophRadu/DiscordRedditReader)')
     reddit.validate_on_submit = True
     logger.log("Logged into reddit as /u/" + redditUser)
 else:
