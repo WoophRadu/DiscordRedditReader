@@ -93,7 +93,7 @@ async def on_ready():
                         embed = discord.Embed()
                         embed.title = post.title
                         embed.url = "https://www.reddit.com" + post.permalink
-                        embed.description = post.selftext
+                        embed.description = post.selftext[:2040]
                         if not post.is_self:
                             if post.url.lower().endswith((".jpeg", ".jpg", ".png", ".gif")):
                                 embed.set_thumbnail(url=post.url)
