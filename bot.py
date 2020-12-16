@@ -43,12 +43,14 @@ try:
     channelToSubreddit = dict()
     channelPostAmount = dict()
     channelPostCateg = dict()
+    channelSkipNSFW = dict()
     for section in config.sections():
         if section[:7] == "Channel":
             channelID = config[section]["channel_id"]
             channelToSubreddit[channelID] = config[section]["subreddits"].split()
             channelPostAmount[channelID] = int(config[section]["post_amount"])
             channelPostCateg[channelID] = config[section]["post_category"]
+            channelSkipNSFW[channelID] = config[section]["skip_nsfw"]
 except:
     logger.log("Something wrong with the config. If you crash, delete it so we can regenerate it.", "error")
 
@@ -105,6 +107,8 @@ async def on_ready():
                 for post in fetchPosts(subredditName, channelPostAmount[str(channel.id)], channelPostCateg[str(channel.id)], True):
                     if post.stickied and (skipSticky in ["true", "True", "1", "yes", "Yes", "y", "Y", "enabled"]):
                         logger.log("Skipped a sticky post. This still counts towards the limit (post_amount). If you're not seeing enough posts, increase your post_amount.")
+                    elif post.over_18 and (channelSkipNSFW[str(channel.id)] in ["true", "True", "1", "yes", "Yes", "y", "Y", "enabled"]):
+                        logger.log("Skipped a NSFW post. This still counts towards the limit (post_amount). If you're not seeing enough posts, increase your post_amount.")
                     else:
                         postCounter += 1
                         embed = discord.Embed()
